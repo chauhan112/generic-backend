@@ -19,6 +19,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('books.urls')), # Forward requests starting with 'api/' to our books app
 ]
 
