@@ -93,6 +93,8 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-api-key",
 ]
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+# Reuse CORS origins for CSRF trust
+CSRF_TRUSTED_ORIGINS = [origin.rstrip('/') for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if origin]
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
