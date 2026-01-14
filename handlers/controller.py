@@ -1,4 +1,4 @@
-from handlers.interface import IHandler
+from handlers import IHandler
 
 class ApiController:
     def __init__(self):

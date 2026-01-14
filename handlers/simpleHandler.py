@@ -1,4 +1,4 @@
-from handlers.interface import IHandler
+from handlers import IHandler
 
 class SimpleHandler(IHandler):
     def is_current_path(self, path: str) -> bool:
@@ -7,3 +7,5 @@ class SimpleHandler(IHandler):
         return True
     def call_handler(self, params: dict):
         return {"message": "Hello, World!"}
+
+

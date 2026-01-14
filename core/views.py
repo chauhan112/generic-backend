@@ -6,6 +6,7 @@ from rest_framework_api_key.models import APIKey
 import json
 from handlers.controller import ApiController
 from handlers.simpleHandler import SimpleHandler
+from handlers.githubHandler import MainGitHubHandler
 
 def get_body(request):
     return json.loads(request.body) if request.body else {}
@@ -16,7 +17,7 @@ def serialize_qs(qs):
 controller = ApiController()
 controller.set_base_path("/api")
 controller.add_handler(SimpleHandler())
-
+controller.add_handler(MainGitHubHandler.get_handler())
 @csrf_exempt
 @require_POST
 def all_ops(request):
@@ -28,11 +29,16 @@ def all_ops(request):
     
     if not api_key or not APIKey.objects.is_valid(api_key):
         return JsonResponse({"detail": "Invalid or missing API key"}, status=401)
-    try:
-        data = get_body(request)
-        controller.set_path(request.path)
-        controller.set_input(data)
-        return JsonResponse(controller.process(), safe=False)
-    except Exception as e:
-        return JsonResponse({"detail": str(e)}, status=400)
+    # try:
+    #     data = get_body(request)
+    #     controller.set_path(request.path)
+    #     controller.set_input(data)
+    #     return JsonResponse(controller.process(), safe=False)
+    # except Exception as e:
+    #     return JsonResponse({"detail": str(e)}, status=400)
+    
+    data = get_body(request)
+    controller.set_path(request.path)
+    controller.set_input(data)
+    return JsonResponse(controller.process(), safe=False)
     
