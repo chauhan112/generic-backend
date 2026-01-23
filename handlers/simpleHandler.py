@@ -8,4 +8,8 @@ class SimpleHandler(IHandler):
     def call_handler(self, params: dict):
         return {"message": "Hello, World!"}
 
-
+    def generate_help(self):
+        return {
+            "path": "/test",
+            "description": "Hello World",
+        }

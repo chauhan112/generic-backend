@@ -23,5 +23,8 @@ class ApiController:
         raise ValueError(f"No endpoint defined for: {self.path}")
     def process(self,):
         handler = self.get_handler()
-        return handler.call_handler(self.params)
+        return {
+            "help": handler.generate_help(),
+            "response": handler.call_handler(self.params)
+        }
 

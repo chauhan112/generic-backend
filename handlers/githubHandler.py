@@ -30,9 +30,8 @@ class GitHubHandlerClone(IHandler):
             if field not in params:
                 raise ValueError(f"Missing required field: {field}")
         
-        if params.get("is_private", False):
-            if "token" not in params:
-                 raise ValueError("Private repositories require a 'token' field.")
+        if params.get("is_private", False) and "token" not in params:
+            raise ValueError("Private repositories require a 'token' field.")
         return True
     
     def call_handler(self, params: dict):
@@ -51,14 +50,21 @@ class GitHubHandlerClone(IHandler):
         destination_path = os.path.join(BASE_DIR, repo_name)
 
         if os.path.exists(destination_path):
-            return {"message": f"Repository already exists at {destination_path}", "path": destination_path}
+            raise ValueError("Repository already exists")
 
         try:
             Repo.clone_from(repo_url, destination_path)
             return {"message": f"Successfully cloned {repo_name}", "path": destination_path}
         except Exception as e:
             error_msg = str(e).replace(token, "***") if token else str(e)
-            return {"error": f"Failed to clone repository: {error_msg}"}
+            raise ValueError(f"Failed to clone repository: {error_msg}")
+
+    def generate_help(self):
+        return {
+            "path": "/github/clone",
+            "description": "Clone a GitHub repository",
+            "params": ["repo", "is_private(optional)", "token(optional)"],
+        }
 
 class GitHubHandlerPull(IHandler):
     def is_current_path(self, path: str) -> bool:
@@ -78,14 +84,25 @@ class GitHubHandlerPull(IHandler):
         repo = Repo(repo_path)
         repo.git.pull()
         return {"message": f"Successfully pulled {branch} from {repo_path}"}
+    
+    def generate_help(self):
+        return {
+            "path": "/github/pull",
+            "description": "Pull a GitHub repository",
+            "params": ["repo", "branch(optional)"],
+        }
 
 class GitHubHandlerListRepos(IHandler):
+    def generate_help(self):
+        return {
+            "path": "/github/list_repos",
+            "description": "List all repositories",
+        }
     def is_current_path(self, path: str) -> bool:
         return path == "/github/list_repos"
     def validate_params(self, params: dict):
         return True
     def call_handler(self, params: dict):
-        """return [{"repo_url": "", "local_path": ""}]"""
         repos = []
         for repo_name in os.listdir(BASE_DIR):
             repo_path = os.path.join(BASE_DIR, repo_name)
@@ -96,6 +113,12 @@ class GitHubHandlerListRepos(IHandler):
         return repos
 
 class GitHubHandlerGetFileContent(IHandler):
+    def generate_help(self):
+        return {
+            "path": "/github/get_file_content",
+            "description": "Get the content of a file in a GitHub repository",
+            "params": ["repo:str", "file:str"],
+        }
     def is_current_path(self, path: str) -> bool:
         return path == "/github/get_file_content"
     def validate_params(self, params: dict):
@@ -140,8 +163,20 @@ class GitHubHandlerSearch(IHandler):
 
     def file_path_relative_to_repo(self, repo_path: str, file_path: str) -> str:
         return file_path[len(repo_path)+1:]
+    
+    def generate_help(self):
+        return {
+            "path": "/github/search",
+            "description": "Search for a word in a GitHub repository",
+            "params": ["repo:str", "extensions(optional):[str]", "word(optional):str", "case(optional):bool", "reg(optional):bool"],
+        }
 
 class GitHubHandlerClean(IHandler):
+    def generate_help(self):
+        return {
+            "path": "/github/clean",
+            "description": "Clean all repositories",
+        }
     def is_current_path(self, path: str) -> bool:
         return path == "/github/clean"
     def validate_params(self, params: dict):
@@ -158,7 +193,34 @@ class GitHubHandlerClean(IHandler):
                     shutil.rmtree(repo_path, onerror=self.on_rm_error)
         return {"message": "Cleaned all repositories"}
 
+class GitHubHandlerDeleteRepo(IHandler):
+    def generate_help(self):
+        return {
+            "path": "/github/delete",
+            "description": "Delete a repository",
+            "params": ["repo:str"],
+        }
+    def is_current_path(self, path: str) -> bool:
+        return path == "/github/delete"
+    def validate_params(self, params: dict):
+        required_fields = ["repo"]
+        str_fields = {"repo": "str"}
+        for field in required_fields:
+            if field not in params:
+                raise ValueError(f"Missing required field: {field} expected type: {str_fields[field]}")
+        return True
+    def on_rm_error(self, func, path, exc_info):
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    def call_handler(self, params: dict):
+        repo_path = params["repo"]
+        name = Tools.repo_name_without_extension(repo_path)
+        repo_path = os.path.join(BASE_DIR, name)
+        shutil.rmtree(repo_path, onerror=self.on_rm_error)
+        return {"message": f"Deleted repository {name}"}
+
 class MainGitHubHandler:
+    @staticmethod
     def get_handler():
         handler = HandlerWrapper()
         handler.add_handler(GitHubHandlerClone())
@@ -167,4 +229,5 @@ class MainGitHubHandler:
         handler.add_handler(GitHubHandlerGetFileContent())
         handler.add_handler(GitHubHandlerListRepos())
         handler.add_handler(GitHubHandlerPull())
+        handler.add_handler(GitHubHandlerDeleteRepo())
         return handler

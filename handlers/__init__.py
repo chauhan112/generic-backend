@@ -1,11 +1,13 @@
+MSG_NOT_IMPLEMENTED = "Subclasses must implement this method"
 class IHandler:
     def validate_params(self, params):
-        raise NotImplementedError("Subclasses must implement this method")
+        raise NotImplementedError(MSG_NOT_IMPLEMENTED)
     def is_current_path(self, path) -> bool:
-        raise NotImplementedError("Subclasses must implement this method")
+        raise NotImplementedError(MSG_NOT_IMPLEMENTED)
     def get_caller(self, params: dict):
-        raise NotImplementedError("Subclasses must implement this method")
-
+        raise NotImplementedError(MSG_NOT_IMPLEMENTED)
+    def generate_help(self):
+        raise NotImplementedError(MSG_NOT_IMPLEMENTED)
 
 class HandlerWrapper(IHandler):
     def __init__(self):
@@ -25,4 +27,5 @@ class HandlerWrapper(IHandler):
         return self.current_handler.call_handler(params)
     def add_handler(self, handler: IHandler):
         self.handlers.append(handler)
-
+    def generate_help(self):
+        return self.current_handler.generate_help()
