@@ -29,16 +29,11 @@ def all_ops(request):
     
     if not api_key or not APIKey.objects.is_valid(api_key):
         return JsonResponse({"detail": "Invalid or missing API key"}, status=401)
-    # try:
-    #     data = get_body(request)
-    #     controller.set_path(request.path)
-    #     controller.set_input(data)
-    #     return JsonResponse(controller.process(), safe=False)
-    # except Exception as e:
-    #     return JsonResponse({"detail": str(e)}, status=400)
-    
-    data = get_body(request)
-    controller.set_path(request.path)
-    controller.set_input(data)
-    return JsonResponse(controller.process(), safe=False)
+    try:
+        data = get_body(request)
+        controller.set_path(request.path)
+        controller.set_input(data)
+        return JsonResponse(controller.process(), safe=False)
+    except Exception as e:
+        return JsonResponse({"detail": str(e)}, status=400)
     
